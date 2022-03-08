@@ -18,7 +18,7 @@ notifications.each do |notification|
   if ignored.include?(author.login)
     # only log the notification URL to avoid "leaking" PR titles etc
     logger.info "Marking '#{notification.url}' as read"
-    # client.mark_thread_as_read(notification.id)
+    client.mark_thread_as_read(notification.id)
     next
   end
 
@@ -29,5 +29,5 @@ notifications.each do |notification|
 
   # only log the notification URL to avoid "leaking" PR titles etc
   logger.info "Marking '#{notification.url}' as read"
-  # client.mark_thread_as_read(notification.id)
+  client.mark_thread_as_read(notification.id)
 end
