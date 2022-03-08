@@ -5,7 +5,7 @@ require 'octokit'
 require 'logger'
 
 client = Octokit::Client.new access_token: ENV['OCTOKIT_ACCESS_TOKEN']
-since = Time.now - (60 * 60)
+since = Time.now - (60 * 60 * 2)
 ignored = %w(ssn-jenkins[bot])
 logger = Logger.new(STDOUT)
 notifications = client.notifications(since: since.iso8601)
