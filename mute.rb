@@ -16,7 +16,8 @@ notifications.each do |notification|
   author = notification.subject.rels[:self].get.data.user
 
   if ignored.include?(author.login)
-    logger.info "Marking '#{notification.subject.title}' as read"
+    # only log the notification URL to avoid "leaking" PR titles etc
+    logger.info "Marking '#{notification.url}' as read"
     # client.mark_thread_as_read(notification.id)
     next
   end
@@ -26,6 +27,7 @@ notifications.each do |notification|
   comment = notification.subject.rels[:latest_comment].get.data
   next unless ignored.include?(comment.user.login)
 
-  logger.info "Marking '#{notification.subject.title}' as read"
+  # only log the notification URL to avoid "leaking" PR titles etc
+  logger.info "Marking '#{notification.url}' as read"
   # client.mark_thread_as_read(notification.id)
 end
