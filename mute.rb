@@ -5,8 +5,8 @@ require 'octokit'
 require 'logger'
 
 client = Octokit::Client.new access_token: ENV['OCTOKIT_ACCESS_TOKEN']
-since = Time.now - (60 * 20)
-ignored = %w(stale[bot] jekyllbot dependabot[bot] dependabot-preview[bot])
+since = Time.now - (60 * 60)
+ignored = %w(ssn-jenkins[bot])
 logger = Logger.new(STDOUT)
 notifications = client.notifications(since: since.iso8601)
 
@@ -16,8 +16,8 @@ notifications.each do |notification|
   author = notification.subject.rels[:self].get.data.user
 
   if ignored.include?(author.login)
-    logger.info "Marking #{notification.subject.title} as read"
-    client.mark_thread_as_read(notification.id)
+    logger.info "Marking '#{notification.subject.title}' as read"
+    # client.mark_thread_as_read(notification.id)
     next
   end
 
@@ -26,6 +26,6 @@ notifications.each do |notification|
   comment = notification.subject.rels[:latest_comment].get.data
   next unless ignored.include?(comment.user.login)
 
-  logger.info "Marking #{notification.subject.title} as read"
-  client.mark_thread_as_read(notification.id)
+  logger.info "Marking '#{notification.subject.title}' as read"
+  # client.mark_thread_as_read(notification.id)
 end
