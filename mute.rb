@@ -5,29 +5,57 @@ require 'octokit'
 require 'logger'
 
 client = Octokit::Client.new access_token: ENV['OCTOKIT_ACCESS_TOKEN']
-since = Time.now - (60 * 60 * 2)
-ignored = %w(ssn-jenkins[bot])
+since = Time.now - (60 * 60) * 12
+ignored_authors = %w(ssn-jenkins[bot])
+ignored_body = "/jenkins trigger"
 logger = Logger.new(STDOUT)
 notifications = client.notifications(since: since.iso8601)
 
 logger.info "Found #{notifications.count} notification(s)"
+if notifications.count > 1
+  logger.info notifications.map {|notif| "\"#{notif.subject.title}\""}.join(", ")
+end
 
 notifications.each do |notification|
-  author = notification.subject.rels[:self].get.data.user
+  pr_info = notification.subject.rels[:self].get.data
+  author = pr_info.user
 
-  if ignored.include?(author.login)
-    # only log the notification URL to avoid "leaking" PR titles etc
-    logger.info "Marking '#{notification.url}' as read"
+  if ignored_authors.include?(author.login)
+    # If the PR or issue author is a bot, mark as read
+    logger.info "Marking \"#{notification.subject.title}\" as read"
     client.mark_thread_as_read(notification.id)
     next
   end
 
+  # Don't silence notifications for PRs authored by the current user
+  next if author.login == client.user.login
+
+  # Don't mark non-comment notifications as read
   next unless notification.subject.rels[:latest_comment]
 
-  comment = notification.subject.rels[:latest_comment].get.data
-  next unless ignored.include?(comment.user.login)
+  # If we've _never_ looked at this PR, don't mark as read
+  next unless notification.last_read_at
 
-  # only log the notification URL to avoid "leaking" PR titles etc
-  logger.info "Marking '#{notification.url}' as read"
-  client.mark_thread_as_read(notification.id)
+  comments = pr_info.rels[:comments].get.data
+  next unless comments && comments.count > 0
+
+  mark_as_read = true
+  comments.each do |comment|
+    next if comment.updated_at < since && comment.updated_at < notification.last_read_at
+
+    is_bot = ignored_authors.include?(comment.user.login)
+    is_current_user = comment.user.login == client.user.login
+    is_bot_command = ignored_body.include?(comment.body)
+
+    next if is_bot || is_current_user || is_bot_command
+
+    logger.info "PR ##{pr_info.number} comment by #{comment.user.login} at #{comment.updated_at}, not marking as read"
+    mark_as_read = false
+    break
+  end
+
+  if mark_as_read
+    logger.info "Marking \"#{notification.subject.title}\" as read"
+    client.mark_thread_as_read(notification.id)
+  end
 end
