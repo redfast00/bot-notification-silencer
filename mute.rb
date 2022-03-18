@@ -37,11 +37,13 @@ notifications.each do |notification|
   next unless notification.last_read_at
 
   comments = pr_info.rels[:comments].get.data
-  next unless comments && comments.count > 0
+  next unless comments
 
   mark_as_read = true
+  comment_count = 0
   comments.each do |comment|
     next if comment.updated_at < since && comment.updated_at < notification.last_read_at
+    comment_count += 1
 
     is_bot = ignored_authors.include?(comment.user.login)
     is_current_user = comment.user.login == client.user.login
@@ -54,8 +56,10 @@ notifications.each do |notification|
     break
   end
 
+  next unless comment_count > 0
+
   if mark_as_read
-    logger.info "Marking \"#{notification.subject.title}\" as read"
+    logger.info "No non-bot comments found, marking \"#{notification.subject.title}\" as read"
     client.mark_thread_as_read(notification.id)
   end
 end
