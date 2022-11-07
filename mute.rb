@@ -25,7 +25,7 @@ notifications.each do |notification|
   if ignored_authors.include?(author.login)
     # If the PR or issue author is a bot, mark as read
     logger.info "Marking \"#{notification.subject.title}\" as read due to ignored author"
-    client.delete_thread_subscription(notification.id)
+    client.update_thread_subscription(notification.id, :ignored => true)
     next
   end
 
