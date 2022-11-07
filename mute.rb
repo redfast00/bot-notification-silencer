@@ -9,7 +9,7 @@ since = Time.now - (60 * 60) * 24 * 4
 ignored_authors = %w(dependabot[bot] dependabot)
 ignored_body = "/jenkins trigger"
 logger = Logger.new(STDOUT)
-notifications = client.notifications(since: since.iso8601)
+notifications = client.notifications(since: since.iso8601, all: true)
 
 logger.info "Found #{notifications.count} notification(s)"
 if notifications.count > 1
@@ -25,7 +25,7 @@ notifications.each do |notification|
   if ignored_authors.include?(author.login)
     # If the PR or issue author is a bot, mark as read
     logger.info "Marking \"#{notification.subject.title}\" as read due to ignored author"
-    client.mark_thread_as_read(notification.id)
+    client.delete_thread_subscription(notification.id)
     next
   end
 
