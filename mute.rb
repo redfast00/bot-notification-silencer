@@ -17,6 +17,7 @@ if notifications.count > 1
 end
 
 notifications.each do |notification|
+  next if notification.subject.rels[:self].nil?
   pr_info = notification.subject.rels[:self].get.data
   author = pr_info.user
 
