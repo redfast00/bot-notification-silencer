@@ -21,7 +21,7 @@ notifications.each do |notification|
   begin
     pr_info = notification.subject.rels[:self].get.data
     author = pr_info.user
-  rescue =>
+  rescue
     next
   end
   next if author.nil?
